@@ -6,9 +6,20 @@ class DiscordBot:
         with open('config/discord_params.json', 'r') as f:
             self.params = json.load(f)
 
+        user_id = self.params['user_id']
+        if not user_id:
+            return
+
         self.headers = {
             'authorization': self.params['user_id']
         }
+    
+    def check_auth(self):
+        if not self.params['user_id']:
+            print("Error: user_id is empty.")
+            return 400
+
+        return 200
 
     def send_message(self, message):
         payload = {

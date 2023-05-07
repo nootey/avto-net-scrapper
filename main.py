@@ -157,14 +157,17 @@ def handle_data(data):
 
 def send_discord_notifications(rows):
         bot = DiscordBot()
-      
-        for index, row in rows.iterrows():
-            message = ('AVTO: ' + row['Naziv'] + '\n'
-                    + 'CENA: ' + row['Cena'] + ' €' + '\n'
-                    + 'URL: ' + row['URL'])
-            bot.send_message(message)
-            print('Notified via Discord at: {}'.format(datetime.now()))
-
+        if bot.check_auth() == 200:
+            for index, row in rows.iterrows():
+                message = ('AVTO: ' + row['Naziv'] + '\n'
+                        + 'CENA: ' + row['Cena'] + ' €' + '\n'
+                        + 'URL: ' + row['URL'])
+                bot.send_message(message)
+                print('Notified via Discord at: {}'.format(datetime.now()))
+        else:
+            send_notification()
+            print('Notified via notification at: {}'.format(datetime.now()))
+        
 def send_notification():
     notification.notify(
         title='Nova Objava',
@@ -200,7 +203,9 @@ if __name__ == '__main__':
     time_zone = pytz.timezone(scheduler_params['timezone'])
     scheduler = BlockingScheduler()
     print('Scheduler started at {}'.format(datetime.now()))
-    scheduler.add_job(scrape, 'cron', hour=scheduler_params['interval'], minute=scheduler_params['start_minute'], args=[False], timezone=time_zone)
+    if scheduler_params['hourly'] == 1: scheduler.add_job(scrape, 'cron', hour = '*/' + scheduler_params['interval_hour'], minute=scheduler_params['start_minute'], args=[False], timezone=time_zone)
+    elif scheduler_params['hourly'] == 0: scheduler.add_job(scrape, 'cron', minute='*/' + scheduler_params['interval_minute'], args=[False], timezone=time_zone)
+    else: scheduler.add_job(scrape, 'cron', hour='*', minute=0, args=[False], timezone=time_zone)
     
     try:
         scheduler.start()

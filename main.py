@@ -1,16 +1,33 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+from plyer import notification
+from apscheduler.schedulers.blocking import BlockingScheduler
+import pytz
+import re
+import pandas as pd
+from discord_notify import DiscordBot
+from datetime import datetime
 
 base_url = 'https://www.avto.net'
 
-def init_advanced_results(params):
+def init_advanced_results(params, page):
+
+    # 3 - date,
+    # 7 - engine_power, 
+    # 6 - km_drivenm,
+    # 2 - register_date,
+    # 4- price
+    # 1 - manufacturer,
+    sort = 3
+    sort_order = 'ASC'
     
     url = url = base_url + f"/Ads/results.asp?znamka={params['znamka']}&model={params['model']}&modelID=&tip=&znamka2=&model2=&tip2=&znamka3=&model3=&tip3=" \
         f"&cenaMin={params['cenaMin']}&cenaMax={params['cenaMax']}&letnikMin={params['letnikMin']}&letnikMax={params['letnikMax']}" \
             f"&bencin=0&starost2=999&oblika=11,%2012&ccmMin=0&ccmMax=99999&mocMin=&mocMax=" \
                 f"&kmMin={params['kmMin']}&kmMax={params['kmMax']}&kwMin=0&kwMax=999" \
-                    f"&motortakt=&motorvalji=&lokacija=0&sirina=&dolzina=&dolzinaMIN=&dolzinaMAX=&nosilnostMIN=&nosilnostMAX=&lezisc=&presek=&premer=&col=&vijakov=&EToznaka=&vozilo=&airbag=&barva=&barvaint=&EQ1=1001000000&EQ2=1000000000&EQ3=1000000000&EQ4=100000000&EQ5=1000000000&EQ6=1000000000&EQ7=1100100020&EQ8=101000000&EQ9=1000000000&KAT=1010000000&PIA=&PIAzero=&PIAOut=&PSLO=&akcija=&paketgarancije=0&broker=&prikazkategorije=&kategorija=&ONLvid=&ONLnak=&zaloga=10&arhiv=&presort=&tipsort=&stran="
+                    f"&motortakt=&motorvalji=&lokacija=0&sirina=&dolzina=&dolzinaMIN=&dolzinaMAX=&nosilnostMIN=&nosilnostMAX=&lezisc=&presek=&premer=&col=&vijakov=&EToznaka=&vozilo=&airbag=&barva=&barvaint=&EQ1=1001000000&EQ2=1000000000&EQ3=1000000000&EQ4=100000000&EQ5=1000000000&EQ6=1000000000&EQ7=1100100020&EQ8=101000000&EQ9=1000000000&KAT=1010000000&PIA=&PIAzero=&PIAOut=&PSLO=&akcija=&paketgarancije=0&broker=&prikazkategorije=&kategorija=&ONLvid=&ONLnak=&zaloga=10&arhiv=" \
+                        f"&presort={sort}&tipsort={sort_order}&stran={page}"
 
     payload={}
     headers = {
@@ -79,34 +96,115 @@ def collect_car_data(result):
         except AttributeError:
             return None
 
-if __name__ == '__main__':
+def format_price(price):
+    pattern = re.compile(r"[\d,.]+(?=\s*€)")
+    match = pattern.search(price)
+    return match.group(0)
+    # return price.split('€')[0].strip() + ' €'
 
-    with open('config/params.json', 'r') as f:
-        params = json.load(f)
-    
-    results = init_advanced_results(params)
-    cars = {}
+def populate_data(results, cars):  
 
     for i, result in enumerate(results):
-        if i == 10:
-            break
-        title = extract_property(result, 'GO-Results-Naziv', 'div')
         data = collect_car_data(extract_property(result, 'GO-Results-Data', 'div'))
+        title = extract_property(result, 'GO-Results-Naziv', 'div')
         price = extract_property(result, 'GO-Results-Price', 'div')
         link = extract_property(result, 'stretched-link', 'a')
         link = link.replace("..", base_url)
 
         if data is not None: 
-            if price is not None: data = {'Cena': price.split('€')[0].strip() + ' €', **data}
-            else: data = {'Cena': 'NEZNANA', **data}
+            data = {'Naziv': title, **data}
+            if price is not None: data = {'Cena': format_price(price), **data}
+            else: data = {'Cena': '', **data}
             data = {'URL': link, **data}
-            cars[title] = data
+            new_row = pd.DataFrame.from_dict(data, orient='index').transpose()
+            cars = pd.concat([cars, new_row], ignore_index=True)
+    return cars
 
-        for title, data in cars.items():
-            print("TITLE: " + f"{title}:")
-            print("DATA: ")
-            for property, value in data.items():
-                print(f"\t{property}: {value}")
-
-       
+def compare_data(new_cars):
+    existing_cars = pd.read_csv('data/listings.csv', sep=';', encoding='utf-8')
+    merged_cars = pd.merge(existing_cars, new_cars, on=['URL'], how='outer', indicator=True, suffixes=['_old', '_new'])
+    diff = merged_cars[merged_cars['_merge'] != 'both']
+    if 'right_only' in diff['_merge'].unique():
+        diff = diff.drop(diff.filter(regex='_old$').columns, axis=1)
+        diff = diff.rename(columns={col: col.replace('_new', '') for col in diff.columns if '_new' in col})
+        diff['action'] = 'new'
+    elif 'left_only' in merged_cars['_merge'].unique():
+        diff = diff.drop(diff.filter(regex='_new$').columns, axis=1)
+        diff = diff.rename(columns={col: col.replace('_old', '') for col in diff.columns if '_old' in col})
+        diff['action'] = 'delete'
+    diff = diff.drop('_merge', axis=1)
     
+    if not diff.empty:
+        handle_data(diff)
+
+def handle_data(data):
+    try:
+        existing_cars = pd.read_csv('data/listings.csv', sep=';', encoding='utf-8').copy()
+    except IOError:
+        print("Error: Could not read CSV file")
+        return None
+        
+    new_rows = data[data['action'] == 'new'].drop('action', axis=1)
+    existing_cars = pd.concat([existing_cars, new_rows], ignore_index=True)
+
+    delete_rows = data[data['action'] == 'delete']['URL']
+    existing_cars = existing_cars[~existing_cars['URL'].isin(delete_rows)]
+    existing_cars = existing_cars.reset_index(drop=True)
+    if '0' in existing_cars.columns: existing_cars = existing_cars.drop('0', axis=1) 
+    existing_cars.to_csv('data/listings.csv', sep=';', index=False, encoding='utf-8')
+    if new_rows.shape[0] >= 1: send_discord_notifications(new_rows)
+
+def send_discord_notifications(rows):
+        bot = DiscordBot()
+      
+        for index, row in rows.iterrows():
+            message = ('AVTO: ' + row['Naziv'] + '\n'
+                    + 'CENA: ' + row['Cena'] + ' €' + '\n'
+                    + 'URL: ' + row['URL'])
+            bot.send_message(message)
+            print('Notified via Discord at: {}'.format(datetime.now()))
+
+def send_notification():
+    notification.notify(
+        title='Nova Objava',
+        message='Nov avto je bil objavljen.',
+        app_name='Avto-Net Scrapper',
+        timeout=10,
+    )
+
+def scrape(init = False):
+    with open('config/params.json', 'r') as f:
+        params = json.load(f)
+    cars = pd.DataFrame()
+    results = init_advanced_results(params, 1)
+    cars = populate_data(results, cars)
+    if init == True: 
+        cars.to_csv('data/listings.csv', sep=';', index=False, encoding='utf-8')
+        print('Initial Scrape executed at {}'.format(datetime.now()))
+    else: 
+        print('Scrape executed at {}'.format(datetime.now()))
+        compare_data(cars)
+
+if __name__ == '__main__':
+
+    # initial scrape
+    scrape(True)
+
+    # run scheduler
+    with open('config/scheduler_params.json', 'r') as f:
+        scheduler_params = json.load(f)
+    
+    time_zone = pytz.timezone(scheduler_params['timezone'])
+    scheduler = BlockingScheduler()
+    print('Scheduler started at {}'.format(datetime.now()))
+    scheduler.add_job(scrape, 'cron', hour=scheduler_params['interval'], minute=scheduler_params['start_minute'], args=[False], timezone=time_zone)
+    
+    try:
+        scheduler.start()
+    except KeyboardInterrupt:
+        print('Scheduler stopped manually by user at {}'.format(datetime.now()))
+    except Exception as e:
+        print('Scheduler stopped unexpectedly with error: {}'.format(str(e)))
+
+
+

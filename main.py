@@ -8,6 +8,7 @@ import re
 import pandas as pd
 from discord_notify import DiscordBot
 from datetime import datetime
+import os
 
 base_url = 'https://www.avto.net'
 
@@ -179,6 +180,8 @@ def scrape(init = False):
     results = init_advanced_results(params, 1)
     cars = populate_data(results, cars)
     if init == True: 
+        if not os.path.exists('data'):
+            os.makedirs('data')
         cars.to_csv('data/listings.csv', sep=';', index=False, encoding='utf-8')
         print('Initial Scrape executed at {}'.format(datetime.now()))
     else: 

@@ -6,5 +6,9 @@
     "letnikMin": 2010,
     "letnikMax": 2090,
     "kmMin": 0,
-    "kmMax": 150000
+    "kmMax": 150000,
+    "ccmMin": 0,
+    "ccmMax": 99999,
+    "mocMin": 0,
+    "mocMax": 99999
 }

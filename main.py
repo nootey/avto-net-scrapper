@@ -21,14 +21,14 @@ def init_advanced_results(params, page):
     # 4- price
     # 1 - manufacturer,
     sort = 3
-    sort_order = 'ASC'
+    sort_order = 'DESC'
     
-    url = url = base_url + f"/Ads/results.asp?znamka={params['znamka']}&model={params['model']}&modelID=&tip=&znamka2=&model2=&tip2=&znamka3=&model3=&tip3=" \
+    url = base_url + f"/Ads/results.asp?znamka={params['znamka']}&model={params['model']}&modelID=&tip=&znamka2=&model2=&tip2=&znamka3=&model3=&tip3=" \
         f"&cenaMin={params['cenaMin']}&cenaMax={params['cenaMax']}&letnikMin={params['letnikMin']}&letnikMax={params['letnikMax']}" \
             f"&bencin=0&starost2=999&oblika=11,%2012&ccmMin=0&ccmMax=99999&mocMin=&mocMax=" \
                 f"&kmMin={params['kmMin']}&kmMax={params['kmMax']}&kwMin=0&kwMax=999" \
                     f"&motortakt=&motorvalji=&lokacija=0&sirina=&dolzina=&dolzinaMIN=&dolzinaMAX=&nosilnostMIN=&nosilnostMAX=&lezisc=&presek=&premer=&col=&vijakov=&EToznaka=&vozilo=&airbag=&barva=&barvaint=&EQ1=1001000000&EQ2=1000000000&EQ3=1000000000&EQ4=100000000&EQ5=1000000000&EQ6=1000000000&EQ7=1100100020&EQ8=101000000&EQ9=1000000000&KAT=1010000000&PIA=&PIAzero=&PIAOut=&PSLO=&akcija=&paketgarancije=0&broker=&prikazkategorije=&kategorija=&ONLvid=&ONLnak=&zaloga=10&arhiv=" \
-                        f"&presort={sort}&tipsort={sort_order}&stran={page}"
+                        f"&presort=3&tipsort=ASC&stran={page}&subSORT={sort}&subTIPSORT={sort_order}"
 
     payload={}
     headers = {
@@ -100,15 +100,16 @@ def collect_car_data(result):
 def format_price(price):
     pattern = re.compile(r"[\d,.]+(?=\s*€)")
     match = pattern.search(price)
-    return match.group(0)
-    # return price.split('€')[0].strip() + ' €'
+    return match.group(0).replace(".", "").replace(",", "")
 
 def populate_data(results, cars):  
 
     for i, result in enumerate(results):
-        data = collect_car_data(extract_property(result, 'GO-Results-Data', 'div'))
+        data = collect_car_data(extract_property(result, 'GO-Results-Top-Data', 'div'))
+        if data is None: data = collect_car_data(extract_property(result, 'GO-Results-Data', 'div'))
         title = extract_property(result, 'GO-Results-Naziv', 'div')
-        price = extract_property(result, 'GO-Results-Price', 'div')
+        price = extract_property(result, 'GO-Results-Top-Price', 'div')
+        if price is None: price = extract_property(result, 'GO-Results-Price', 'div')
         link = extract_property(result, 'stretched-link', 'a')
         link = link.replace("..", base_url)
 
@@ -160,7 +161,7 @@ def send_discord_notifications(rows):
         if bot.check_auth() == 200:
             for index, row in rows.iterrows():
                 message = ('AVTO: ' + row['Naziv'] + '\n'
-                        + 'CENA: ' + row['Cena'] + ' €' + '\n'
+                        + 'CENA: ' + str(row['Cena']) + ' €' + '\n'
                         + 'URL: ' + row['URL'])
                 bot.send_message(message)
                 print('Notified via Discord at: {}'.format(datetime.now()))

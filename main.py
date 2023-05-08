@@ -9,6 +9,7 @@ import pandas as pd
 from discord_notify import DiscordBot
 from datetime import datetime
 import os
+import math
 
 base_url = 'https://www.avto.net'
 
@@ -157,12 +158,26 @@ def handle_data(data):
     if new_rows.shape[0] >= 1: send_discord_notifications(new_rows)
 
 def send_discord_notifications(rows):
+        is_nan = False
         bot = DiscordBot()
         if bot.check_auth() == 200:
             for index, row in rows.iterrows():
-                message = ('AVTO: ' + row['Naziv'] + '\n'
-                        + 'CENA: ' + str(row['Cena']) + ' €' + '\n'
-                        + 'URL: ' + row['URL'])
+                print(row)
+                try:
+                    is_nan = math.isnan(float(row['Cena']))
+                except (TypeError, ValueError):
+                    is_nan = True
+                
+                if is_nan == True: 
+                    price = ":x:"
+                    title = ":interrobang:"
+                else: 
+                    price = str(row['Cena']) + ' €'
+                    title = row['Naziv']
+                
+                message = ('AVTO: ' + title + '\n'
+                    + 'CENA: ' + price + '\n'
+                    + 'URL: ' + row['URL'])
                 bot.send_message(message)
                 print('Notified via Discord at: {}'.format(datetime.now()))
         else:
@@ -214,6 +229,3 @@ if __name__ == '__main__':
         print('Scheduler stopped manually by user at {}'.format(datetime.now()))
     except Exception as e:
         print('Scheduler stopped unexpectedly with error: {}'.format(str(e)))
-
-
-

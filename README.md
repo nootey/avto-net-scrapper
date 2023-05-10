@@ -23,3 +23,5 @@ Pridobite jih tako, da se v brskalniku prijavite v Discord z željenim računom 
 ```
 
 V /config sta tudi json datoteki, s parametri za iskalnik avtov in za razporejevalnik.
+
+V datoteki "config/params.json" se lahko ureja isalne parametre. Zapisani so tisti, katere sem uporabljal sam, za vrednosti dodatnih parametrov, je potrebno preverti poizvedbo z le temi in jih izločiti.

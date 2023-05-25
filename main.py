@@ -139,18 +139,39 @@ def handle_data(data):
     try:
         existing_cars = pd.read_csv('data/listings.csv', sep=';', encoding='utf-8').copy()
     except IOError:
-        print("Error: Could not read CSV file")
+        print("Error: Could not read listings CSV file")
         return None
         
     new_rows = data[data['action'] == 'new'].drop('action', axis=1)
     existing_cars = pd.concat([existing_cars, new_rows], ignore_index=True)
 
-    delete_rows = data[data['action'] == 'delete']['URL']
-    existing_cars = existing_cars[~existing_cars['URL'].isin(delete_rows)]
-    existing_cars = existing_cars.reset_index(drop=True)
+    delete_rows = data[data['action'] == 'delete']
+    handle_deleted_listings(delete_rows)
+
     if '0' in existing_cars.columns: existing_cars = existing_cars.drop('0', axis=1) 
     existing_cars.to_csv('data/listings.csv', sep=';', index=False, encoding='utf-8')
     if new_rows.shape[0] >= 1: send_discord_notifications(new_rows)
+
+def handle_deleted_listings(deleted_listings):
+    print(deleted_listings)
+
+    if not os.path.isfile('data/listings_archive.csv'):
+        df = pd.DataFrame()
+        df.columns = ['URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik','Motor']
+        df.to_csv('data/listings_archive.csv', index=False)
+    
+    if not deleted_listings.empty:
+        try:
+            archive = pd.read_csv('data/listings_archive.csv', sep=';', encoding='utf-8').copy()
+        except IOError:
+            print("Error: Could not read listings_archive CSV file")
+            return None
+        
+        combined_df = pd.concat([archive, deleted_listings], ignore_index=True)
+        combined_df = combined_df.drop_duplicates()
+        combined_df.to_csv('data/listings_archive.csv', index=False)
+        # if '0' in dropped_cars.columns: dropped_cars = dropped_cars.drop('0', axis=1)
+        # dropped_cars.to_csv('data/listings_archive.csv', sep=';', index=False, encoding='utf-8')
 
 def send_discord_notifications(rows):
         is_nan = False
@@ -165,14 +186,17 @@ def send_discord_notifications(rows):
                 
                 if is_nan == True: 
                     price = ":x:"
-                    title = ":interrobang:"
+                    title = ":x:"
                 else: 
                     price = str(row['Cena']) + ' €'
                     title = row['Naziv']
                 
                 message = ('AVTO: ' + title + '\n'
                     + 'CENA: ' + price + '\n'
-                    + 'URL: ' + row['URL'])
+                    + 'URL: ' + row['URL'] + '\n'
+                    + 'REGISTRACIJA: ' + row['1.registracija'] + '\n'
+                    + 'KILOMETRI: ' + row['Prevoženih'] + '\n'
+                    + 'MOTOR: ' + row['Motor'])
                 bot.send_message(message)
                 print('Notified via Discord at: {}'.format(datetime.now()))
         else:

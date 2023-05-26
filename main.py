@@ -6,13 +6,14 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 import pytz
 import re
 import pandas as pd
-from discord_notify import DiscordBot
 from datetime import datetime
 import os
-import math
+import logging
 
+logging.basicConfig(level=logging.WARNING)
 base_url = 'https://www.avto.net'
 columns = ['URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik','Motor']
+webhook_url = "https://discord.com/api/webhooks/1111672115981201428/MPHTlc_DYfVe8jiesrOEYjxJWTo_3Fc8xDUPB2c072u2eq0ilFZVBqeTpcfM9xCzQF0-"
 
 def init_advanced_results(params, page):
 
@@ -185,26 +186,32 @@ def check_null_data(column):
         column = str(column)
     return column
 
+def send_discord_message(content):
+    data = {
+        "content": content
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    response = requests.post(webhook_url, data=json.dumps(data), headers=headers)
+    if response.status_code != 204:
+        print("Failed to send Discord message:", response.text)
+
 def send_discord_notifications(rows):
-        bot = DiscordBot()
-        if bot.check_auth() == 200:
-            for index, row in rows.iterrows():
-                print(row)
-                message = (
-                    '**<--  NOV OGLAS :red_car:   -->**' + '\n'
-                    + '**AVTO:** ' + check_null_data(row['Naziv']) + '\n'
-                    + '**CENA:** ' + check_null_data(row['Cena']) + ' €' '\n'
-                    + '**URL:** ' + check_null_data(row['URL']) + '\n'
-                    + '**REGISTRACIJA:** ' + check_null_data(row['1.registracija']) + '\n'
-                    + '**KILOMETRI:** ' + check_null_data(row['Prevoženih']) + '\n'
-                    + '**MOTOR:** ' + check_null_data(row['Motor'])
-                    )
-                bot.send_message(message)
-                print('Notified via Discord at: {}'.format(datetime.now()))
-        else:
-            send_notification()
-            print('Notified via notification at: {}'.format(datetime.now()))
-        
+    for index, row in rows.iterrows():
+        print(row)
+        message = (
+            '**<--  NOV OGLAS :red_car:   -->**' + '\n'
+            + '**AVTO:** ' + check_null_data(row['Naziv']) + '\n'
+            + '**CENA:** ' + check_null_data(row['Cena']) + ' €' '\n'
+            + '**URL:** ' + check_null_data(row['URL']) + '\n'
+            + '**REGISTRACIJA:** ' + check_null_data(row['1.registracija']) + '\n'
+            + '**KILOMETRI:** ' + check_null_data(row['Prevoženih']) + '\n'
+            + '**MOTOR:** ' + check_null_data(row['Motor'])
+            )
+        send_discord_message(message)
+        print('Notified via Discord at: {}'.format(datetime.now()))
+
 def send_notification():
     notification.notify(
         title='Nova Objava',
@@ -228,25 +235,27 @@ def scrape(init = False):
         print('Scrape executed at {}'.format(datetime.now()))
         compare_data(cars)
 
-if __name__ == '__main__':
-
+def main():
     # initial scrape
     scrape(True)
 
     # run scheduler
     with open('config/scheduler_params.json', 'r') as f:
         scheduler_params = json.load(f)
-    
+
     time_zone = pytz.timezone(scheduler_params['timezone'])
     scheduler = BlockingScheduler()
     print('Scheduler started at {}'.format(datetime.now()))
     if scheduler_params['hourly'] == 1: scheduler.add_job(scrape, 'cron', hour = '*/' + scheduler_params['interval_hour'], minute=scheduler_params['start_minute'], args=[False], timezone=time_zone)
     elif scheduler_params['hourly'] == 0: scheduler.add_job(scrape, 'cron', minute='*/' + scheduler_params['interval_minute'], args=[False], timezone=time_zone)
     else: scheduler.add_job(scrape, 'cron', hour='*', minute=0, args=[False], timezone=time_zone)
-    
+
     try:
         scheduler.start()
     except KeyboardInterrupt:
         print('Scheduler stopped manually by user at {}'.format(datetime.now()))
     except Exception as e:
         print('Scheduler stopped unexpectedly with error: {}'.format(str(e)))
+
+if __name__ == '__main__':
+    main()

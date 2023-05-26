@@ -12,6 +12,7 @@ import os
 import math
 
 base_url = 'https://www.avto.net'
+columns = ['URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik','Motor']
 
 def init_advanced_results(params, page):
 
@@ -114,8 +115,15 @@ def populate_data(results, cars):
             if price is not None: data = {'Cena': format_price(price), **data}
             else: data = {'Cena': '', **data}
             data = {'URL': link, **data}
-            new_row = pd.DataFrame.from_dict(data, orient='index').transpose()
-            cars = pd.concat([cars, new_row], ignore_index=True)
+            data_cleaned = {column: data[column] for column in columns if column in data}
+            if 'Menjalnik' not in data_cleaned:
+                data_cleaned['Menjalnik'] = None
+            if '1.registracija' not in data_cleaned:
+                data_cleaned['1.registracija'] = None
+            if 'Prevoženih' not in data_cleaned:
+                data_cleaned['Prevoženih'] = None
+            new_row = pd.DataFrame.from_dict(data_cleaned, orient='index').transpose()
+            cars = pd.concat([cars[columns], new_row[columns]], ignore_index=True)
     return cars
 
 def compare_data(new_cars):
@@ -156,8 +164,7 @@ def handle_deleted_listings(deleted_listings):
     print(deleted_listings)
 
     if not os.path.isfile('data/listings_archive.csv'):
-        df = pd.DataFrame()
-        df.columns = ['URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik','Motor']
+        df = pd.DataFrame(columns = columns)
         df.to_csv('data/listings_archive.csv', index=False)
     
     if not deleted_listings.empty:
@@ -168,10 +175,15 @@ def handle_deleted_listings(deleted_listings):
             return None
         
         combined_df = pd.concat([archive, deleted_listings], ignore_index=True)
-        combined_df = combined_df.drop_duplicates()
+        combined_df = combined_df.drop_duplicates(subset='URL')
         combined_df.to_csv('data/listings_archive.csv', index=False)
-        # if '0' in dropped_cars.columns: dropped_cars = dropped_cars.drop('0', axis=1)
-        # dropped_cars.to_csv('data/listings_archive.csv', sep=';', index=False, encoding='utf-8')
+
+def check_null_data(column):
+    if column is None: 
+        column = ":x:"
+    else: 
+        column = str(column)
+    return column
 
 def send_discord_notifications(rows):
         is_nan = False
@@ -179,24 +191,12 @@ def send_discord_notifications(rows):
         if bot.check_auth() == 200:
             for index, row in rows.iterrows():
                 print(row)
-                try:
-                    is_nan = math.isnan(float(row['Cena']))
-                except (TypeError, ValueError):
-                    is_nan = True
-                
-                if is_nan == True: 
-                    price = ":x:"
-                    title = ":x:"
-                else: 
-                    price = str(row['Cena']) + ' €'
-                    title = row['Naziv']
-                
-                message = ('AVTO: ' + title + '\n'
-                    + 'CENA: ' + price + '\n'
-                    + 'URL: ' + row['URL'] + '\n'
-                    + 'REGISTRACIJA: ' + row['1.registracija'] + '\n'
-                    + 'KILOMETRI: ' + row['Prevoženih'] + '\n'
-                    + 'MOTOR: ' + row['Motor'])
+                message = ('**AVTO:** ' + check_null_data(row['Naziv']) + '\n'
+                    + '**CENA:** ' + check_null_data(row['Cena']) + ' €' '\n'
+                    + '**URL:** ' + check_null_data(row['URL']) + '\n'
+                    + '**REGISTRACIJA:** ' + check_null_data(row['1.registracija']) + '\n'
+                    + '**KILOMETRI:** ' + check_null_data(row['Prevoženih']) + '\n'
+                    + '**MOTOR:** ' + check_null_data(row['Motor']))
                 bot.send_message(message)
                 print('Notified via Discord at: {}'.format(datetime.now()))
         else:
@@ -214,7 +214,7 @@ def send_notification():
 def scrape(init = False):
     with open('config/params.json', 'r') as f:
         params = json.load(f)
-    cars = pd.DataFrame()
+    cars = pd.DataFrame(columns = columns)
     results = init_advanced_results(params, 1)
     cars = populate_data(results, cars)
     if init == True: 

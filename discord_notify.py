@@ -26,8 +26,14 @@ class DiscordBot:
             'content': message
         }
 
-        requests.post(
-            f"https://discord.com/api/v9/channels/{self.params['channel_id']}/messages",
-            data=payload, headers=self.headers)
+        try:
+            response = requests.post(
+                f"https://discord.com/api/v9/channels/{self.params['channel_id']}/messages",
+                data=payload, headers=self.headers)
+            response.raise_for_status()
+
+            print("Message sent successfully!")
+        except requests.exceptions.RequestException as e:
+            print(f"Error sending message: {e}")
 
         

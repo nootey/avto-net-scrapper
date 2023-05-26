@@ -186,17 +186,19 @@ def check_null_data(column):
     return column
 
 def send_discord_notifications(rows):
-        is_nan = False
         bot = DiscordBot()
         if bot.check_auth() == 200:
             for index, row in rows.iterrows():
                 print(row)
-                message = ('**AVTO:** ' + check_null_data(row['Naziv']) + '\n'
+                message = (
+                    '**<--  NOV OGLAS :red_car:   -->**' + '\n'
+                    + '**AVTO:** ' + check_null_data(row['Naziv']) + '\n'
                     + '**CENA:** ' + check_null_data(row['Cena']) + ' €' '\n'
                     + '**URL:** ' + check_null_data(row['URL']) + '\n'
                     + '**REGISTRACIJA:** ' + check_null_data(row['1.registracija']) + '\n'
                     + '**KILOMETRI:** ' + check_null_data(row['Prevoženih']) + '\n'
-                    + '**MOTOR:** ' + check_null_data(row['Motor']))
+                    + '**MOTOR:** ' + check_null_data(row['Motor'])
+                    )
                 bot.send_message(message)
                 print('Notified via Discord at: {}'.format(datetime.now()))
         else:

@@ -10,10 +10,13 @@ from datetime import datetime
 import os
 import logging
 
+with open('config/params.json', 'r') as f:
+    params = json.load(f)
+
 logging.basicConfig(level=logging.WARNING)
 base_url = 'https://www.avto.net'
 columns = ['URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik','Motor']
-webhook_url = "https://discord.com/api/webhooks/1111672115981201428/MPHTlc_DYfVe8jiesrOEYjxJWTo_3Fc8xDUPB2c072u2eq0ilFZVBqeTpcfM9xCzQF0-"
+webhook_url = params['webhook_url']
 
 def init_advanced_results(params, page):
 
@@ -221,8 +224,6 @@ def send_notification():
     )
 
 def scrape(init = False):
-    with open('config/params.json', 'r') as f:
-        params = json.load(f)
     cars = pd.DataFrame(columns = columns)
     results = init_advanced_results(params, 1)
     cars = populate_data(results, cars)

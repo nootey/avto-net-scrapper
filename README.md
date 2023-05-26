@@ -10,18 +10,10 @@ Projekt ne bo vzdrževan, tako da obstaja velika verjetnost, da bo treba posodob
 
 Za delovanje je potrebno namestiti knjižnice, ki so uporabljene v main.py, če še niso.
 
-Prav tako je za delovanje potrebno povezati Discord uporabnika (ne bot-a):
-v /config ustvarite discord_params.json in vnesite spodnjo json strukturo, s svojimi podatki.
+Prav tako je za delovanje potrebno pridobiti webhook naslov za discord strežnik. 
 
-Pridobite jih tako, da se v brskalniku prijavite v Discord z željenim računom in odprete Network Tools. V željen kanal napišete sporočilo, s kakršno koli vsebino, ter pridobite request v network zavihku.
+> server settings -> intergrations -> webhooks -> create -> copy URL
 
-```json
-{
-    "channel_id": "",
-    "user_id": ""
-}
-```
-
-V /config sta tudi json datoteki, s parametri za iskalnik avtov in za razporejevalnik.
+Url je potrebno vnesti v json datoteko params.json, kjer so tudi parametri za iskalnik avtov in za razporejevalnik.
 
 V datoteki "config/params.json" se lahko ureja isalne parametre. Zapisani so tisti, katere sem uporabljal sam, za vrednosti dodatnih parametrov, je potrebno preverti poizvedbo z le temi in jih izločiti.

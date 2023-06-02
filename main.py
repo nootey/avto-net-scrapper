@@ -13,10 +13,13 @@ import logging
 with open('config/params.json', 'r') as f:
     params = json.load(f)
 
+with open('config/webhook.json', 'r') as f:
+    webhook = json.load(f)
+
 logging.basicConfig(level=logging.WARNING)
 base_url = 'https://www.avto.net'
 columns = ['URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik','Motor']
-webhook_url = params['webhook_url']
+webhook_url = webhook['url']
 
 def init_advanced_results(params, page):
 
@@ -157,7 +160,7 @@ def handle_data(data):
     new_rows = data[data['action'] == 'new'].drop('action', axis=1)
     existing_cars = pd.concat([existing_cars, new_rows], ignore_index=True)
 
-    delete_rows = data[data['action'] == 'delete']
+    delete_rows = data[data['action'] == 'delete'].drop('action', axis=1)
     handle_deleted_listings(delete_rows)
 
     if '0' in existing_cars.columns: existing_cars = existing_cars.drop('0', axis=1) 
@@ -165,8 +168,6 @@ def handle_data(data):
     if new_rows.shape[0] >= 1: send_discord_notifications(new_rows)
 
 def handle_deleted_listings(deleted_listings):
-    print(deleted_listings)
-
     if not os.path.isfile('data/listings_archive.csv'):
         df = pd.DataFrame(columns = columns)
         df.to_csv('data/listings_archive.csv', index=False)

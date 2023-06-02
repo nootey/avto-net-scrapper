@@ -125,3 +125,5 @@ dmypy.json
 
 data/
 config/discord_params.json
+
+config/webhook.json

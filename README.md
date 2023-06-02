@@ -14,6 +14,14 @@ Prav tako je za delovanje potrebno pridobiti webhook naslov za discord strežnik
 
 > server settings -> intergrations -> webhooks -> create -> copy URL
 
-Url je potrebno vnesti v json datoteko params.json, kjer so tudi parametri za iskalnik avtov in za razporejevalnik.
+Za uporabo URLja ustvarite datoteko webhook.json s spodnjo strukturo:
+
+```json
+{
+	"url": "url_string"
+}
+```
+
+V mapi config se prav tako nahajajo konfiguracijske datoteke za parametre iskalnega niza, ter za razporejevalnik
 
 V datoteki "config/params.json" se lahko ureja isalne parametre. Zapisani so tisti, katere sem uporabljal sam, za vrednosti dodatnih parametrov, je potrebno preverti poizvedbo z le temi in jih izločiti.

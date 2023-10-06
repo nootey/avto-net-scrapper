@@ -9,6 +9,8 @@ import pandas as pd
 from datetime import datetime
 import os
 import logging
+import asyncio
+from pyppeteer import launch
 
 with open('config/params.json', 'r') as f:
     params = json.load(f)
@@ -20,6 +22,44 @@ logging.basicConfig(level=logging.WARNING)
 base_url = 'https://www.avto.net'
 columns = ['URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik','Motor']
 webhook_url = webhook['url']
+
+async def scrape_with_js_and_cookies(params):
+    browser = await launch(headless=True)
+    page = await browser.newPage()
+    sort = 3
+    sort_order = 'DESC'
+    url =  base_url + f"/Ads/results.asp?znamka={params['znamka']}&model={params['model']}&modelID=&tip=&znamka2=&model2=&tip2=&znamka3=&model3=&tip3=" \
+        f"&cenaMin={params['cenaMin']}&cenaMax={params['cenaMax']}&letnikMin={params['letnikMin']}&letnikMax={params['letnikMax']}" \
+            f"&bencin=0&starost2=999&oblika={params['oblika']},%2012&ccmMin={params['ccmMin']}&ccmMax={params['ccmMax']}&mocMin={params['mocMin']}&mocMax={params['mocMax']}" \
+                f"&kmMin={params['kmMin']}&kmMax={params['kmMax']}&kwMin={params['kwMin']}&kwMax={params['kwMax']}" \
+                    f"&motortakt=&motorvalji=&lokacija=0&sirina=&dolzina=&dolzinaMIN=&dolzinaMAX=&nosilnostMIN=&nosilnostMAX=" \
+                        f"&lezisc=&presek=&premer=&col=&vijakov=&EToznaka=&vozilo=&airbag=&barva=&barvaint=" \
+                            f"&EQ1={params['EQ1']}&EQ2={params['EQ2']}&EQ3={params['EQ3']}&EQ4={params['EQ4']}&EQ5={params['EQ5']}&EQ6={params['EQ6']}&EQ7={params['EQ7']}&EQ8={params['EQ8']}&EQ9={params['EQ9']}" \
+                                f"&KAT=1010000000&PIA=&PIAzero=&PIAOut=&PSLO=&akcija=&paketgarancije=0&broker=&prikazkategorije=&kategorija=&ONLvid=&ONLnak=&zaloga=10&arhiv=" \
+                                    f"&presort=3&tipsort=ASC&stran={page}&subSORT={sort}&subTIPSORT={sort_order}" \
+                                        f"&subLOCATION={params['subLOCATION']}"
+    try:
+        # Enable JavaScript
+        await page.setJavaScriptEnabled(True)
+
+        response = await page.goto(url)
+
+        status_code = response.status  
+
+        if status_code == 200:
+    
+            page_content = await page.content()
+        else:
+            print("The response returned an error:")
+            print(f"Status code: {status_code}")
+            return 500
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return 500 
+    finally:
+        await browser.close()
+
+    return page_content
 
 def init_advanced_results(params, page):
 
@@ -58,7 +98,6 @@ def init_advanced_results(params, page):
         print(f"Status code: {response.status_code}")
         print(f"Error message: {err}")
         return 500
-
 
 def init_top_recent_results():
     url = "https://www.avto.net/Ads/results_100.asp"
@@ -125,7 +164,6 @@ def format_price(price):
     return match.group(0).replace(".", "").replace(",", "")
 
 def populate_data(results, cars):  
-
     for i, result in enumerate(results):
         data = collect_car_data(extract_property(result, 'GO-Results-Top-Data', 'div'))
         if data is None: data = collect_car_data(extract_property(result, 'GO-Results-Data', 'div'))
@@ -244,8 +282,15 @@ def send_notification():
 
 def scrape(init = False):
     cars = pd.DataFrame(columns = columns)
-    results = init_advanced_results(params, 1)
-    if(results == 500):
+
+    def run_scrape():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        results = loop.run_until_complete(scrape_with_js_and_cookies(params))
+        return results
+
+    results = run_scrape()
+    if(results == 500 or results == 403 or results == 404):
         return None
     else:
         cars = populate_data(results, cars)

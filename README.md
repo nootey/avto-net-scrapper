@@ -1,5 +1,6 @@
 :warning: **Ta skraper je namenjen izključno za osebno uporabo in ni namenjen uporabi, ki krši pogoje storitev avto.net. Ne prevzemam odgovornosti za morebitne posledice, kot so začasne ali pa trajne IP prepovedi zaradi prekomernega števila zahtev. Uporabljajte na lastno odgovornost.**
 
+:warning: **Skraper ne deluje več, saj je avto-net implementiral Cloudflare DDOS Protection.**
 # Avtonet Skraper
 
 To je moj prvi skraper, zato funkcionalnost ni popolna. Paginacija ni implementirana, saj se je uporabljal samo za iskanje novejših oglasov.

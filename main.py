@@ -43,14 +43,22 @@ def init_advanced_results(params, page):
     'Accept-Language': 'en-GB,en;q=0.9,en-US;q=0.8',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Cookie': 'ogledov=; COOKizpis100=1; statAvtokatalog=13; statistika=ID18379680=0&ID18378880=0&ID18379557=0; model1=; datadome=5cd8DsXRvwMa0XX3-puPfc6bSSPurxX-tmksJfEXNljrFws9CIptGj1QF7Ac_dxpVfmyJJL-7SmNP-bBQZIxmaGPjny_UJ5yIUI_eLjefDBxjCBB5uGNPBBqAvlkIWen; datadome=1H9TTkHdp8F9rjUIzBch7HPfb8OHQIeK8kmEX68pKY9SsFsAwBOYql_Xv~r3Lu50S8E4nQKUJjHJWQUwM1iyTPLe5eBsoo2AlMkYLKmIOCl3ZQMH_nnHo6N0MdgVsr-k; COOKizpis100=1; ogledov=; statAvtokatalog=12',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.68',
+    'Cookie': 'ogledov=; COOKizpis100=1; statAvtokatalog=13; statistika=ID18379680=0&ID18378880=0&ID18379557=0; model1=; datadome=5cd8DsXRvwMa0XX3-puPfc6bSSPurxX-tmksJfEXNljrFws9CIptGj1QF7Ac_dxpVfmyJJL-7SmNP-bBQZIxmaGPjny_UJ5yIUI_eLjefDBxjCBB5uGNPBBqAvlkIWen; __cf_bm=1l7lJBS4DYxhKSQ3b4TNoUSnvWISFUtXbj545wIUzFs-1696584744-0-AUceRsoV9Y/dw5y1RZJ4f9/bxbHcADpx0J/gG5XW50oBsxPf2i6fhR0AOvKlhmhdVegvzA0nziWfsGEyMACYXtg=; datadome=3YSWcbrqfq731uSMX0FoP8c8H-zDCUmtPJ3sagJQ81jOBmKwMz58rTUdq6qEGssXkaz3tSFEvxOCx430hCQiZ1Y4OqgtI0OJbJyf-vExRUu7RTWl4AWeflPAQR3sUQ6I',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.68'
     }
 
-    response = requests.request("GET", url, headers=headers, data=payload)
+    
+    try:
+        response = requests.request("GET", url, headers=headers, data=payload)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+        return soup.find_all('div', class_='GO-Results-Row')
+    except requests.exceptions.HTTPError as err:
+        print("The request returned an error.")
+        print(f"Status code: {response.status_code}")
+        print(f"Error message: {err}")
+        return 500
 
-    soup = BeautifulSoup(response.content, 'html.parser')
-    return soup.find_all('div', class_='GO-Results-Row')
 
 def init_top_recent_results():
     url = "https://www.avto.net/Ads/results_100.asp"
@@ -65,10 +73,17 @@ def init_top_recent_results():
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.68'
     }
 
-    response = requests.request("GET", url, headers=headers, data=payload)
 
-    soup = BeautifulSoup(response.content, 'html.parser')
-    return soup.find_all({'div': {'class': 'GO-Results-Row'}, 'a': True})
+    try:
+        response = requests.request("GET", url, headers=headers, data=payload)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+        return soup.find_all({'div': {'class': 'GO-Results-Row'}, 'a': True})
+    except requests.exceptions.HTTPError as err:
+        print("The request returned an error.")
+        print(f"Status code: {response.status_code}")
+        print(f"Error message: {err}")
+        return 500
 
 def extract_property(result, property_class, type):
     try:
@@ -230,37 +245,40 @@ def send_notification():
 def scrape(init = False):
     cars = pd.DataFrame(columns = columns)
     results = init_advanced_results(params, 1)
-    cars = populate_data(results, cars)
-    if init == True: 
-        if not os.path.exists('data'):
-            os.makedirs('data')
-        cars.to_csv('data/listings.csv', sep=';', index=False, encoding='utf-8')
-        print('Initial Scrape executed at {}'.format(datetime.now()))
-    else: 
-        print('Scrape executed at {}'.format(datetime.now()))
-        compare_data(cars)
+    if(results == 500):
+        return None
+    else:
+        cars = populate_data(results, cars)
+        if init == True: 
+            if not os.path.exists('data'):
+                os.makedirs('data')
+            cars.to_csv('data/listings.csv', sep=';', index=False, encoding='utf-8')
+            print('Initial Scrape executed at {}'.format(datetime.now()))
+        else: 
+            print('Scrape executed at {}'.format(datetime.now()))
+            compare_data(cars)
 
 def main():
     # initial scrape
-    scrape(True)
+    state = scrape(True)
+    if state:
+        # run scheduler
+        with open('config/scheduler_params.json', 'r') as f:
+            scheduler_params = json.load(f)
 
-    # run scheduler
-    with open('config/scheduler_params.json', 'r') as f:
-        scheduler_params = json.load(f)
+        time_zone = pytz.timezone(scheduler_params['timezone'])
+        scheduler = BlockingScheduler()
+        print('Scheduler started at {}'.format(datetime.now()))
+        if scheduler_params['hourly'] == 1: scheduler.add_job(scrape, 'cron', hour = '*/' + scheduler_params['interval_hour'], minute=scheduler_params['start_minute'], args=[False], timezone=time_zone)
+        elif scheduler_params['hourly'] == 0: scheduler.add_job(scrape, 'cron', minute='*/' + scheduler_params['interval_minute'], args=[False], timezone=time_zone)
+        else: scheduler.add_job(scrape, 'cron', hour='*', minute=0, args=[False], timezone=time_zone)
 
-    time_zone = pytz.timezone(scheduler_params['timezone'])
-    scheduler = BlockingScheduler()
-    print('Scheduler started at {}'.format(datetime.now()))
-    if scheduler_params['hourly'] == 1: scheduler.add_job(scrape, 'cron', hour = '*/' + scheduler_params['interval_hour'], minute=scheduler_params['start_minute'], args=[False], timezone=time_zone)
-    elif scheduler_params['hourly'] == 0: scheduler.add_job(scrape, 'cron', minute='*/' + scheduler_params['interval_minute'], args=[False], timezone=time_zone)
-    else: scheduler.add_job(scrape, 'cron', hour='*', minute=0, args=[False], timezone=time_zone)
-
-    try:
-        scheduler.start()
-    except KeyboardInterrupt:
-        print('Scheduler stopped manually by user at {}'.format(datetime.now()))
-    except Exception as e:
-        print('Scheduler stopped unexpectedly with error: {}'.format(str(e)))
+        try:
+            scheduler.start()
+        except KeyboardInterrupt:
+            print('Scheduler stopped manually by user at {}'.format(datetime.now()))
+        except Exception as e:
+            print('Scheduler stopped unexpectedly with error: {}'.format(str(e)))
 
 if __name__ == '__main__':
     main()

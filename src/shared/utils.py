@@ -1,4 +1,5 @@
 import re
+from src.shared.log import logger
 
 def extract_property(result, property_class, tag_type):
     try:
@@ -8,6 +9,7 @@ def extract_property(result, property_class, tag_type):
         return el.text.strip()
     except (AttributeError, TypeError, KeyError):
         return None
+
 def collect_car_data(text_block):
     lines = [line.strip() for line in text_block.split('\n') if line.strip()]
     if len(lines) % 2 != 0:

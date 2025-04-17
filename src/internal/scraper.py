@@ -8,7 +8,7 @@ from datetime import datetime
 import os
 from bs4 import BeautifulSoup
 from src.shared.config import params, build_url, get_columns
-from src.shared.log import log
+from src.shared.log import logger
 
 async def scrape_with_js_and_cookies(params):
     url = build_url(params)
@@ -18,7 +18,6 @@ async def scrape_with_js_and_cookies(params):
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=False)
             page = await browser.new_page()
-            log("Initial scrape successful.")
 
             await page.goto(url, timeout=60000)
             await page.wait_for_selector("div.GO-Results-Row", timeout=15000)
@@ -32,10 +31,10 @@ async def scrape_with_js_and_cookies(params):
             return cleaned_content
 
     except KeyboardInterrupt:
-        print(f"\n[{datetime.now()}] Scraping manually interrupted by user")
+        logger.warning("Scraping manually interrupted by user.")
         return 500
     except Exception as e:
-        print(f"[{datetime.now()}] Error during scraping: {e}")
+        logger.exception("Error during scraping.")
         return 500
     finally:
         if browser:
@@ -43,27 +42,31 @@ async def scrape_with_js_and_cookies(params):
 
 
 def scrape(init=False):
+    logger.info("Starting scrape process...")
     cars = pd.DataFrame(columns=get_columns())
 
     def run_scrape():
         return asyncio.run(scrape_with_js_and_cookies(params))
 
-    # Always scrape fresh page and save HTML
     result = run_scrape()
-    if result in [500, 403, 404]:
-        print(f"[{datetime.now()}] Scrape failed, aborting.")
+    if isinstance(result, int) and result in [500, 403, 404]:
+        logger.error(f"Scrape failed with error code {result}, aborting.")
         return None
 
 
-    # Parse and build dataset
-    cars = populate_data(result, cars)
+    try:
+        cars = populate_data(result, cars)
 
-    if init:
-        os.makedirs("data", exist_ok=True)
-        cars.to_csv("data/listings.csv", sep=';', index=False)
-        print(f"[{datetime.now()}] Initial listings saved")
-    else:
-        compare_data(cars)
+        if init:
+            os.makedirs("data", exist_ok=True)
+            cars.to_csv("data/listings.csv", sep=';', index=False)
+            logger.info("Initial listings saved to data/listings.csv")
+        else:
+            compare_data(cars)
 
-    print(f"[{datetime.now()}] Scrape complete")
-    return cars
+        logger.info("Scrape complete")
+        return cars
+
+    except Exception as e:
+        logger.exception("Error during data population or comparison.")
+        return None

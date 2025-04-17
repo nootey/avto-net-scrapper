@@ -2,13 +2,21 @@ import requests
 from plyer import notification
 from src.shared.config import webhook
 from src.shared.utils import check_null_data
+from src.shared.log import logger
 
 def send_discord_message(content):
     headers = {"Content-Type": "application/json"}
     data = {"content": content}
-    response = requests.post(webhook['url'], headers=headers, json=data)
-    if response.status_code != 204:
-        print("Failed to send message:", response.text)
+
+    try:
+        response = requests.post(webhook['url'], headers=headers, json=data)
+        if response.status_code != 204:
+            logger.warning(f"Failed to send message to Discord: {response.text}")
+        else:
+            logger.info("Discord message sent successfully.")
+
+    except Exception as e:
+        logger.exception("Exception occurred while sending message to Discord.")
 
 def send_discord_notifications(rows):
     for _, row in rows.iterrows():
@@ -24,9 +32,14 @@ def send_discord_notifications(rows):
         send_discord_message(message)
 
 def send_notification():
-    notification.notify(
-        title='Nova Objava',
-        message='Nov avto je bil objavljen.',
-        app_name='Avto-Net Scraper',
-        timeout=10,
-    )
+    try:
+        notification.notify(
+            title='Nova Objava',
+            message='Nov avto je bil objavljen.',
+            app_name='Avto-Net Scraper',
+            timeout=10,
+        )
+        logger.info("Local desktop notification sent.")
+
+    except Exception as e:
+        logger.warning("Failed to send desktop notification.")

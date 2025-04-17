@@ -4,11 +4,13 @@ from bs4 import BeautifulSoup
 from src.shared.utils import extract_property, collect_car_data, format_price
 import pandas as pd
 from src.shared.config import get_columns, get_base_url
+from src.shared.log import logger
 
 def populate_data(html, cars):
     soup = BeautifulSoup(html, 'html.parser')
     results = soup.find_all('div', class_='GO-Results-Row')
-    print(f"[{datetime.now()}] Found {len(results)} car listings")
+
+    logger.info(f"Found {len(results)} car listings")
 
     for result in results:
         data_block = extract_property(result, 'GO-Results-Top-Data', 'div')

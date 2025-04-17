@@ -4,8 +4,6 @@
 > Ne prevzemam **odgovornosti** za morebitne posledice, kot so **začasne ali trajne IP prepovedi** zaradi prekomernega števila zahtev.  
 > **Uporabljajte na lastno odgovornost.**
 
----
-
 ## [SLO]
 
 ## 🧰 O projektu
@@ -53,8 +51,6 @@ Brez paginacije (pridobiva samo prvo stran rezultatov)
 Projekt ni vzdrževan – posodobitve Avtoneta ali Discorda lahko povzročijo napake
 
 Namenjen zgolj osebni rabi, ni produkcijsko optimiziran
-
----
 
 ## [EN]
 

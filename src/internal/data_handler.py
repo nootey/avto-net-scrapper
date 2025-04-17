@@ -2,8 +2,6 @@ import pandas as pd
 import os
 from src.internal.notifier import send_discord_notifications
 
-columns = ['URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik','Motor']
-
 def compare_data(new_cars):
     try:
         existing = pd.read_csv('data/listings.csv', sep=';')

@@ -3,10 +3,11 @@ import re
 def extract_property(result, property_class, tag_type):
     try:
         el = result.find(tag_type, class_=property_class)
-        return el['href'] if tag_type == 'a' else el.text.strip()
-    except:
+        if tag_type == 'a':
+            return el['href']
+        return el.text.strip()
+    except (AttributeError, TypeError, KeyError):
         return None
-
 def collect_car_data(text_block):
     lines = [line.strip() for line in text_block.split('\n') if line.strip()]
     if len(lines) % 2 != 0:

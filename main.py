@@ -2,9 +2,8 @@ from src.internal.scheduler import start_scheduler
 from src.internal.scraper import scrape
 from datetime import datetime
 import traceback
+from src.shared.log import log
 
-def log(msg):
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}")
 
 def main():
     try:
@@ -20,6 +19,7 @@ def main():
 
     except Exception as e:
         log("An unexpected error occurred!")
+        log(e)
         traceback.print_exc()
 
 if __name__ == "__main__":

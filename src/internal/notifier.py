@@ -1,5 +1,4 @@
 import requests
-from datetime import datetime
 from plyer import notification
 from src.shared.config import webhook
 from src.shared.utils import check_null_data

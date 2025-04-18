@@ -9,7 +9,7 @@
 ## O projektu
 
 - To je moj prvi skraper, narejen za spremljanje novejših oglasov na [avto.net](https://www.avto.net/).
-- Projekt **ne bo vzdrževan**, zato obstaja velika verjetnost, da bo treba **posodobiti zahtevke** za Avtonet ali Discord.
+- Projekt **ne bo redno vzdrževan**, zato obstaja velika verjetnost, da bo treba **posodobiti zahtevke** za Avtonet ali Discord.
 
 ---
 
@@ -41,7 +41,7 @@
 
 ### 3. Konfiguracija iskanja
 
-- V mapi config se nahajata:
+- V mapi config se nahajajo:
 - (USTVARI) `params.json`– oznake za filtriranje (npr. znamka, model, leto, cena)
   - Dodeljena je datoteka `params_example.json` z privzetimi vrednostmi.
   - Za opise ključnih parametrov, se obrnite [tukaj](./docs/search_parameters.md)
@@ -69,7 +69,7 @@
 ## About the Project
 
 - This is my first scraper, created to monitor new listings on avto.net.
-- The project **will not maintained**, so there's a high chance that requests to Avtonet or Discord will **need to be updated** in the future.
+- The project **will not be maintained regularly**, so there's a high chance that requests to Avtonet or Discord will **need to be updated** in the future.
 
 ## Usage
 
@@ -93,7 +93,7 @@
 
 ```json
 {
-	"url": "your_webhook_url"
+	"url": "webhook_url"
 }
 ```
 
@@ -105,7 +105,7 @@
   - To view explanation for the important parameters, check [the docs](./docs/search_parameters.md)
 - `scheduler.json` – optional settings for scheduling queries
 - `selectors.json` – HTML class selectors used for scraping (in case Avtonet changes their site structure)
-- You can customize the config/params.json file to your preferences. Only the filters I used myself are included.
+- You can customize the `config/params.json` file to your preferences. Only the filters I used myself are included.
 - If you want additional filters, check the network requests on Avtonet when using filters and manually include the appropriate parameters.
 
 ## Limitations

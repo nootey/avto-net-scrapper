@@ -25,7 +25,7 @@ async def scrape_with_js_and_cookies(params):
 
             await asyncio.sleep(random.uniform(2, 5))  # anti-bot cooldown
             await page.goto(url, timeout=60000)
-            await page.wait_for_selector(get_selectors()["result_row"], timeout=15000)
+            await page.wait_for_selector("div."+get_selectors()["result_row"], timeout=15000)
 
             content = await page.content()
             soup = BeautifulSoup(content, "html.parser")

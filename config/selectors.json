@@ -1,5 +1,5 @@
 {
-  "result_row": "div.GO-Results-Row",
+  "result_row": "GO-Results-Row",
   "title": "GO-Results-Naziv",
   "price_main": "GO-Results-Top-Price",
   "price_fallback": "GO-Results-Price",

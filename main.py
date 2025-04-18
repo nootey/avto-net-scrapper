@@ -9,14 +9,17 @@ async def main() -> None:
 
     param_limits = get_param_limits()
     brands = params["znamka"]
+    selected_model = params["model"]
     is_all_brands = brands == [""] or len(brands) == 0
+    is_all_models = selected_model == ""
     num_brands = len(brands)
 
     print()
     print("avto-net scrapper")
     print("-" * 40)
 
-    print(f"Brands:      {'all' if is_all_brands else ', '.join(brands)}")
+    print(f"Brand(s):      {'all' if is_all_brands else ', '.join(brands)}")
+    print(f"Model(s):      {'all' if is_all_models else selected_model}")
     print(f"Max Pages:   {param_limits['max_pages']}")
 
     total_requests = num_brands * param_limits['max_pages']

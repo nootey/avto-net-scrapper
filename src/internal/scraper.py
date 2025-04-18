@@ -71,7 +71,13 @@ async def scrape_brand_with_pagination(brand: str, max_pages: int) -> pd.DataFra
             continue
 
         page_data = populate_data(result, pd.DataFrame(columns=get_columns()))
+        found_count = len(page_data)
         brand_results = pd.concat([brand_results, page_data], ignore_index=True)
+
+        max_results_per_page = get_param_limits()["max_results_per_page"]
+        if found_count < max_results_per_page:
+            logger.debug(f"Less than {max_results_per_page} results on page {page} — assuming last page.")
+            break
 
     return brand_results
 

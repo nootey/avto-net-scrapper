@@ -7,6 +7,7 @@ import sys
 MAX_PAGES = 3
 MAX_BRANDS = 2
 MIN_SCRAPE_INTERVAL_MINUTES = 2
+MAX_RESULTS_PER_PAGE = 48 # Max displayed listings on Avto net, as of April 2025
 
 with open('config/params.json') as f:
     params = json.load(f)
@@ -18,7 +19,12 @@ with open('config/scheduler_params.json') as f:
     scheduler_params = json.load(f)
 
 def get_param_limits() -> dict:
-    return {"max_pages": MAX_PAGES, "max_brands": MAX_BRANDS, "min_scrape_interval_m": MIN_SCRAPE_INTERVAL_MINUTES}
+    return {
+        "max_pages": MAX_PAGES,
+        "max_brands": MAX_BRANDS,
+        "min_scrape_interval_m": MIN_SCRAPE_INTERVAL_MINUTES,
+        "max_results_per_page": MAX_RESULTS_PER_PAGE
+    }
 
 def get_selectors() -> dict:
     with open('config/selectors.json') as f:

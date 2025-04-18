@@ -31,7 +31,7 @@
 - Webhook URL lahko pridobite iz obstoječega Discord serverja, in sicer:
 - `Server settings -> Integrations -> Webhooks -> New Webhook`
 - Nato izberete kanal, v katerega bodo prihajala sporočila.
-- Ko dobite generiran URL, ga shranite v datoteko `webhook.json`:
+- Ko dobite generiran URL, ga shranite v datoteko `config/webhook.json`:
 
 ```json
 {
@@ -53,8 +53,13 @@
 
 ## Omejitve
 
-- Brez paginacije (pridobiva samo prvo stran rezultatov)
-- Projekt ni vzdrževan – posodobitve Avtoneta ali Discorda lahko povzročijo napake
+- Omejitve, proti zaznavi, da gre za skraper:
+  - Omejena paginacija (podprto do max 3 strani)
+  - Omejene znamke (do max 3)
+  - Omejeno na samo en model
+  - Rešljivo z ostrejšim filtrom
+- Slabo dokumentirani parametri iskanja
+- Projekt ne bo redno vzdrževan – posodobitve Avtoneta ali Discorda lahko povzročijo napake
 - Namenjen zgolj osebni rabi, ni produkcijsko optimiziran
 
 ---
@@ -84,7 +89,7 @@
 - The Webhook URL can be generated for an existing Discord server:
 - `Server settings -> Integrations -> Webhooks -> New Webhook`
 - Select which channel should be used for the sent messages.
-- Once you get the URL, place it in: `webhook.json`:
+- Once you get the URL, place it in: `config/webhook.json`:
 
 ```json
 {
@@ -105,6 +110,11 @@
 
 ## Limitations
 
-- No pagination (only fetches the first page of results)
+- Limits, to attempt to prevent detection as a scrapper:
+  - Limited pagination (up to 3 pages)
+  - Limited brand support (up to 3 brands)
+  - Limited to only one model
+  - This can be resolved with tighter filters. 
+- Poor search parameter documentation
 - The project is not maintained – updates to Avtonet or Discord may cause errors
 - Intended for personal use only, not optimized for production

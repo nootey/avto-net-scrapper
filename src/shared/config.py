@@ -1,4 +1,12 @@
 import json
+import sys
+
+# Config limits
+# Change these at your own discretion.
+# This is as far as I'd go, you might arouse suspicion with too many requests per scrape
+MAX_PAGES = 3
+MAX_BRANDS = 2
+MIN_SCRAPE_INTERVAL_MINUTES = 2
 
 with open('config/params.json') as f:
     params = json.load(f)
@@ -9,6 +17,8 @@ with open('config/webhook.json') as f:
 with open('config/scheduler_params.json') as f:
     scheduler_params = json.load(f)
 
+def get_param_limits() -> dict:
+    return {"max_pages": MAX_PAGES, "max_brands": MAX_BRANDS, "min_scrape_interval_m": MIN_SCRAPE_INTERVAL_MINUTES}
 
 def get_selectors() -> dict:
     with open('config/selectors.json') as f:
@@ -36,3 +46,29 @@ def build_url(params: dict) -> str:
 
 def get_columns():
     return ['HASH', 'URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik', 'Motor']
+
+def validate_params(params: dict) -> None:
+    brand = params.get("znamka")
+
+    if isinstance(brand, list):
+        if len(brand) > MAX_BRANDS:
+            print(f"[ERROR] Too many brands provided. Max allowed is {MAX_BRANDS}. You gave: {len(brand)}")
+            sys.exit(1)
+    elif isinstance(brand, str):
+        if brand == "":
+            # Allow empty string → all brands
+            params["znamka"] = [""]
+        else:
+            # Convert single string into list, for consistency
+            params["znamka"] = [brand]
+    else:
+        print("[ERROR] 'znamka' must be either a string, an empty string, or a list of strings.")
+        sys.exit(1)
+
+    interval = scheduler_params.get("interval_minute", 1)
+    if int(interval) < MIN_SCRAPE_INTERVAL_MINUTES:
+        print(f"[ERROR] Scrape interval too short. Must be at least {MIN_SCRAPE_INTERVAL_MINUTES} minute(s).")
+        sys.exit(1)
+
+# Run validation on import
+validate_params(params)

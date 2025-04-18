@@ -1,0 +1,9 @@
+{
+  "result_row": "div.GO-Results-Row",
+  "title": "GO-Results-Naziv",
+  "price_main": "GO-Results-Top-Price",
+  "price_fallback": "GO-Results-Price",
+  "data_block_primary": "GO-Results-Top-Data",
+  "data_block_fallback": "GO-Results-Data",
+  "link": "stretched-link"
+}

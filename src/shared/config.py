@@ -9,6 +9,11 @@ with open('config/webhook.json') as f:
 with open('config/scheduler_params.json') as f:
     scheduler_params = json.load(f)
 
+
+def get_selectors() -> dict:
+    with open('config/selectors.json') as f:
+        return json.load(f)
+
 def get_base_url():
     return 'https://www.avto.net'
 

@@ -1,5 +1,5 @@
 import re
-from src.shared.log import logger
+import hashlib
 
 def extract_property(result, property_class, tag_type):
     try:
@@ -22,3 +22,7 @@ def format_price(price):
 
 def check_null_data(value):
     return ":x:" if value is None else str(value)
+
+def hash_listing(title: str, price: str, registration: str) -> str:
+    combined = f"{title}|{price}|{registration}"
+    return hashlib.sha256(combined.encode('utf-8')).hexdigest()

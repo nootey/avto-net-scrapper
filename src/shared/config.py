@@ -35,4 +35,4 @@ def build_url(params: dict) -> str:
         f"&presort={presort}&tipsort={tipsort}&stran={page_num}&subSORT={sort}&subTIPSORT={sort_order}&subLOCATION={params['subLOCATION']}"
 
 def get_columns():
-    return ['URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik', 'Motor']
+    return ['HASH', 'URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik', 'Motor']

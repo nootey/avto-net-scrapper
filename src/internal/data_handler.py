@@ -10,26 +10,27 @@ def compare_data(new_cars):
     except FileNotFoundError:
         existing = pd.DataFrame(columns=get_columns())
 
-    merged = pd.merge(existing, new_cars, on='URL', how='outer', indicator=True, suffixes=['_old', '_new'])
+    merged = pd.merge(existing, new_cars, on='HASH', how='outer', indicator=True, suffixes=['_old', '_new'])
     diff = merged[merged['_merge'] != 'both']
 
     if diff.empty:
         logger.info("No new or removed car listings found.")
         return
 
-    if 'right_only' in diff['_merge'].values:
-        diff = diff.filter(regex='_new$|^URL$').rename(columns=lambda x: x.replace('_new', ''))
-        diff['action'] = 'new'
-    else:
-        diff = diff.filter(regex='_old$|^URL$').rename(columns=lambda x: x.replace('_old', ''))
-        diff['action'] = 'delete'
+    new_listings = diff[diff['_merge'] == 'right_only']
 
-    handle_data(diff)
+    if new_listings.empty:
+        logger.info("No new listings to add.")
+        return
 
-def handle_data(diff):
+    # Rebuild rows with only relevant columns
+    new_listings_cleaned = new_listings.filter(regex='_new$|^HASH$').rename(columns=lambda col: col.replace('_new', ''))
+    new_listings_cleaned = new_listings_cleaned[get_columns()]  # Reorder columns
+
+    handle_data(new_listings_cleaned)
+
+def handle_data(new_rows):
     existing = pd.read_csv('data/listings.csv', sep=';') if os.path.exists('data/listings.csv') else pd.DataFrame(columns=get_columns())
-    new_rows = diff[diff['action'] == 'new'].drop(columns='action')
-
     updated = pd.concat([existing, new_rows], ignore_index=True)
     updated.to_csv('data/listings.csv', sep=';', index=False)
 

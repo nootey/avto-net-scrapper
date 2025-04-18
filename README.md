@@ -44,6 +44,7 @@
 - V mapi config se nahajata:
 - `params.json`– oznake za filtriranje (npr. znamka, model, leto, cena)
 - `scheduler.json` – opcijska nastavitev za razporejanje poizvedb
+- `selectors.json` – razredi HTML elementov, ki jih uporablja scraper (če Avtonet spremeni strukturo strani)
 - Datoteko config/params.json lahko prilagodite svojim željam. Dodani so samo parametri, ki sem jih uporabljal sam.
 - Če želite dodatne filtre, preverite omrežne zahteve na Avtonetu pri uporabi filtrov in ustrezne parametre vključite ročno.
 
@@ -94,7 +95,7 @@
 - Inside the config folder, you'll find:
 - `params.json` – search parameters for filters (e.g. brand, model, year, price)
 - `scheduler.json` – optional settings for scheduling queries
-
+- `selectors.json` – HTML class selectors used for scraping (in case Avtonet changes their site structure)
 - You can customize the config/params.json file to your preferences. Only the filters I used myself are included.
 - If you want additional filters, check the network requests on Avtonet when using filters and manually include the appropriate parameters.
 

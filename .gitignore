@@ -128,3 +128,4 @@ config/discord_params.json
 
 config/webhook.json
 .idea
+config/params.json

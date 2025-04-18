@@ -82,6 +82,14 @@ async def scrape(init=False):
     all_results = pd.DataFrame(columns=get_columns())
 
     for brand in params["znamka"]:
+        local_params = params.copy()
+        local_params["znamka"] = brand
+
+        # Always apply the model (if it exists) — Avto.net will skip invalid combos
+        if params["model"]:
+            local_params["model"] = params["model"]
+
+        logger.info(f"Scraping: {brand} {'(' + params['model'] + ')' if params['model'] else ''}")
         brand_data = await scrape_brand_with_pagination(brand, param_limits["max_pages"])
         all_results = pd.concat([all_results, brand_data], ignore_index=True)
 

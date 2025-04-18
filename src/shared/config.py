@@ -42,7 +42,7 @@ def build_url(params: dict) -> str:
         f"&sedezevMIN=&sedezevMAX=&lezisc=&presek=&premer=&col=&vijakov=&EToznaka=&vozilo=&airbag=&barva=&barvaint=&doseg=&BkType=&BkOkvir=&BkOkvirType=&Bk4=" \
         f"&EQ1={params['EQ1']}&EQ2={params['EQ2']}&EQ3={params['EQ3']}&EQ4={params['EQ4']}&EQ5={params['EQ5']}&EQ6={params['EQ6']}&EQ7={params['EQ7']}&EQ8={params['EQ8']}&EQ9={params['EQ9']}&EQ10={params['EQ10']}" \
         f"&KAT=1010000000&PIA=&PIAzero=&PIAOut=&PSLO=&akcija=&paketgarancije=0&broker=&prikazkategorije=&kategorija=&ONLvid=&ONLnak=&zaloga=10&arhiv=" \
-        f"&presort={presort}&tipsort={tipsort}&stran={page_num}&subSORT={sort}&subTIPSORT={sort_order}&subLOCATION={params['subLOCATION']}"
+        f"&presort={presort}&tipsort={tipsort}&stran={page_num}&subSORT={sort}&subTIPSORT={sort_order}&subLOCATION={params['subLOCATION']}&subSELLER=2"
 
 def get_columns():
     return ['HASH', 'URL', 'Cena', 'Naziv', '1.registracija', 'Prevoženih', 'Menjalnik', 'Motor']
